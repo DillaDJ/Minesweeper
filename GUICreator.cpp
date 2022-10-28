@@ -188,6 +188,12 @@ namespace GUICreator {
         return close;
     }
     
+    void ResetBoard()
+    {
+        
+
+
+    }
 
     void DrawBoard() 
     {
