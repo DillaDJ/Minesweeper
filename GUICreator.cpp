@@ -1,8 +1,5 @@
-#include "dependencies/imgui/imgui.h"
 #include "GUICreator.h"
-#include "GameManager.h"
-#include <type_traits>
-
+#include <iostream>
 
 namespace GUICreator {
 
@@ -12,18 +9,13 @@ namespace GUICreator {
     // Theme
     bool dark_mode { false }; // Toggle Dark Mode
 
-    // Component names and colours for theming
-    enum class UIComponent { Text = 0, WindowBG = 2, PopupBG = 4, Border = 5, FrameBG = 7, TitleBG = 10, TitleBGActive = 11, MenuBarBG = 13, CheckMark = 19, Button = 22, ButtonHovered = 23, ButtonActive = 24 };
-
-    // Difficulty in GUI
+    // Game Variables for GUI
     GameManager::Difficulty mines{ GameManager::Difficulty::easy };
     GameManager::Difficulty size { GameManager::Difficulty::easy };
 
-    // Overrides the unary + operator to convert ui_component into an int
-    constexpr auto operator+(UIComponent a) noexcept
-    {
-        return static_cast<std::underlying_type_t<UIComponent>>(a);
-    }
+    std::vector<std::vector<bool>> tile_state { }; // 2D vector
+
+    constexpr ImVec2 tile_size{ 50.f, 50.f };
 
     // Colour Presets
     constexpr ImVec4 white          { 1.f   , 1.f   , 1.f   , 1.f };
@@ -43,12 +35,15 @@ namespace GUICreator {
     constexpr ImVec4 secondary_l    { 0.431f, 0.776f, 1.f   , 1.f };
     constexpr ImVec4 secondary_d    { 0.f   , 0.412f, 0.753f, 1.f };
 
+    // Forward Declarations
+    void ResetBoard();
+    void DrawBoard();
 
-    void NewGameWindow(bool* p_open, ImGuiStyle& style)
+
+    void NewGameWindow(bool* p_open)
     {
         ImGuiWindowFlags new_game_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize;
-        style.WindowBorderSize = 1.f;
-
+        ImGui::GetStyle().WindowBorderSize = 1.f;
 
         ImGui::Begin("New Game", p_open, new_game_flags);
 
@@ -63,6 +58,8 @@ namespace GUICreator {
 
         ImGui::Unindent();
 
+        ImGui::Separator();
+
         ImGui::TextUnformatted("Select Size:");
 
         ImGui::Indent();
@@ -73,9 +70,11 @@ namespace GUICreator {
 
         ImGui::Unindent();
 
-        if (ImGui::Button("Start", ImVec2{ 50.f, 20.f }))
+        ImGui::Separator();
+
+        if (ImGui::Button("Start"))
         {
-            GameManager::NewGame(mines, size);
+            tile_state = GameManager::NewGame(mines, size);
             new_game_window = false;
         }
 
@@ -103,53 +102,59 @@ namespace GUICreator {
         return true;
     }
 
-    bool DrawGUI() 
+    void StyleMainGUI() 
     {
-        ImGui::ShowDemoWindow();
-
-        bool close = false; // Exit the program if true
         ImGuiStyle& style{ ImGui::GetStyle() };
-        
-        style.WindowBorderSize = 0.0f; 
+
+        style.WindowBorderSize = 0.0f;
         style.FramePadding = ImVec2(6.f, 6.f);
+        style.ItemSpacing = ImVec2(8.f, 4.f);
 
         // Unary + is overrode to get underlying variable of enums
-        if (dark_mode) 
+        if (dark_mode)
         {
-            style.Colors[+UIComponent::Text]           = white;
-            style.Colors[+UIComponent::Border]         = white;
-            style.Colors[+UIComponent::MenuBarBG]      = d_primary;
-            style.Colors[+UIComponent::FrameBG]        = d_primary;
-            style.Colors[+UIComponent::TitleBG]        = d_primary;
-            style.Colors[+UIComponent::TitleBGActive]  = d_primary;
-            style.Colors[+UIComponent::WindowBG]       = d_primary_d;
-            style.Colors[+UIComponent::PopupBG]        = d_primary_d;
+            style.Colors[ImGuiCol_Text]         = white;
+            style.Colors[ImGuiCol_Border]       = white;
+            style.Colors[ImGuiCol_MenuBarBg]    = d_primary;
+            style.Colors[ImGuiCol_FrameBg]      = d_primary;
+            style.Colors[ImGuiCol_TitleBg]      = d_primary;
+            style.Colors[ImGuiCol_TitleBgActive]= d_primary;
+            style.Colors[ImGuiCol_WindowBg]     = d_primary_d;
+            style.Colors[ImGuiCol_PopupBg]      = d_primary_d;
         }
-        else 
+        else
         {
-            style.Colors[+UIComponent::Text]           = black;
-            style.Colors[+UIComponent::Border]         = black;
-            style.Colors[+UIComponent::MenuBarBG]      = l_primary_d;
-            style.Colors[+UIComponent::FrameBG]        = l_primary_d;
-            style.Colors[+UIComponent::TitleBG]        = l_primary_d;
-            style.Colors[+UIComponent::TitleBGActive]  = l_primary_d;
-            style.Colors[+UIComponent::WindowBG]       = l_primary;
-            style.Colors[+UIComponent::PopupBG]        = l_primary;
+            style.Colors[ImGuiCol_Text]         = black;
+            style.Colors[ImGuiCol_Border]       = black;
+            style.Colors[ImGuiCol_MenuBarBg]    = l_primary_d;
+            style.Colors[ImGuiCol_FrameBg]      = l_primary_d;
+            style.Colors[ImGuiCol_TitleBg]      = l_primary_d;
+            style.Colors[ImGuiCol_TitleBgActive]= l_primary_d;
+            style.Colors[ImGuiCol_WindowBg]     = l_primary;
+            style.Colors[ImGuiCol_PopupBg]      = l_primary;
         }
 
-        style.Colors[+UIComponent::CheckMark]          = secondary;
-        style.Colors[+UIComponent::Button]             = secondary;
-        style.Colors[+UIComponent::ButtonHovered]      = secondary_l;
-        style.Colors[+UIComponent::ButtonActive]       = secondary_d;
+        style.Colors[ImGuiCol_CheckMark]        = secondary;
+        style.Colors[ImGuiCol_Button]           = secondary;
+        style.Colors[ImGuiCol_ButtonHovered]    = secondary_l;
+        style.Colors[ImGuiCol_ButtonActive]     = secondary_d;
+    }
+        
+    bool DrawGUI() 
+    {
+        bool close = false; // Exit the program if true
+
+        ImGui::ShowDemoWindow();
+        StyleMainGUI();
 
         // Create menu bar
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("Menu"))
             {
-                if (ImGui::MenuItem("New Game")) new_game_window = !new_game_window;
-                if (ImGui::MenuItem("Dark Mode", NULL, dark_mode)) dark_mode = !dark_mode;
-                if (ImGui::MenuItem("Quit", "Alt + F4")) close = ExitPopup();
+                if (ImGui::MenuItem("New Game"))                    new_game_window = !new_game_window;
+                if (ImGui::MenuItem("Dark Mode", NULL, dark_mode))  dark_mode = !dark_mode;
+                if (ImGui::MenuItem("Quit", "Alt + F4"))            close = ExitPopup();
 
                 ImGui::EndMenu();
             }
@@ -157,7 +162,7 @@ namespace GUICreator {
             if (ImGui::BeginMenu("Help"))
             {
                 if (ImGui::MenuItem("How To Play")) HowToPopup();
-                if (ImGui::MenuItem("About")) AboutPopup();
+                if (ImGui::MenuItem("About"))       AboutPopup();
 
                 ImGui::EndMenu();
             }
@@ -165,24 +170,41 @@ namespace GUICreator {
         }
 
         // Create main window
-        static ImGuiWindowFlags main_window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+        static ImGuiWindowFlags main_window_flags{ ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings };
 
-        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        const ImGuiViewport* viewport{ ImGui::GetMainViewport() };
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
         if (ImGui::Begin("Main Window", 0, main_window_flags))
         {
-
-
-
+            DrawBoard();
         }
         ImGui::End();
 
         // Open extra windows
-        if (new_game_window) NewGameWindow(&new_game_window, style);
+        if (new_game_window) NewGameWindow(&new_game_window);
 
         return close;
     }
     
+
+    void DrawBoard() 
+    {
+        ImGuiStyle& style{ ImGui::GetStyle() };
+        style.ItemSpacing = ImVec2(1.f, 1.f);
+
+        for (int y = 0; y < 10; ++y)
+        {
+            for (int x = 0; x < 10; ++x)
+            {
+                if (x > 0) ImGui::SameLine();
+
+                ImGui::PushID(y * x + x);
+                ImGui::Button("##", tile_size);
+                ImGui::PopID();
+            }
+        }
+        
+    }
 }

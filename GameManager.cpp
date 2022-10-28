@@ -3,8 +3,8 @@
 namespace GameManager
 {
 	
-
-	void NewGame(Difficulty mines, Difficulty size) {
-
+	std::vector<std::vector<bool>> NewGame(Difficulty mines, Difficulty size) {
+		return std::vector<std::vector<bool>> {};
 	}
+
 }

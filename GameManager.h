@@ -1,8 +1,9 @@
 #pragma once
+#include <vector>
 
 namespace GameManager 
 {
 	enum class Difficulty { easy, medium, hard }; // Difficulty, mine-wise or size-wise
 
-	void NewGame(Difficulty mines, Difficulty size);
+	std::vector<std::vector<bool>> NewGame(Difficulty mines, Difficulty size);
 }
