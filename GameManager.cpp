@@ -6,6 +6,9 @@ namespace GameManager
 	constexpr double easy_mine_percent		{ 0.10 };
 	constexpr double medium_mine_percent	{ 0.20 };
 	constexpr double hard_mine_percent		{ 0.35 };
+	constexpr int easy_dimensions	{ 10 };
+	constexpr int medium_dimensions	{ 20 };
+	constexpr int hard_dimensions	{ 30 };
 
 	Difficulty mine_difficulty{ Difficulty::easy };
 	Difficulty size_difficulty{ Difficulty::easy };
@@ -16,7 +19,6 @@ namespace GameManager
 	bool victory   { false };
 
 
-	
 	void PrintMinefield(std::vector<TileState> mines)
 	{
 		int dimensions{ GetDimensions() };
@@ -35,6 +37,9 @@ namespace GameManager
 		std::cout << std::endl << std::endl;
 	}
 
+	// Generates a minefield by filling a vector with random integers, storing the ints in a map with their positions then sorting the vector
+	// I then pick an index in the sorted vector for how many mines we want and allocate this as the threshold, anything under it is a mine in
+	// the final vector minefield and everything else is unexplored until clicked
 	void NewGame(Difficulty mine_amount, Difficulty size) 
 	{
 		int tile_count {};
@@ -54,13 +59,13 @@ namespace GameManager
 		switch (size)
 		{
 			case GameManager::Difficulty::easy:
-				tile_count = 100;
+				tile_count = easy_dimensions * easy_dimensions;
 				break;
 			case GameManager::Difficulty::medium:
-				tile_count = 400;
+				tile_count = medium_dimensions * medium_dimensions;
 				break;
 			case GameManager::Difficulty::hard:
-				tile_count = 1600;
+				tile_count = hard_dimensions * hard_dimensions;
 				break;
 			default:
 				break;
@@ -106,7 +111,10 @@ namespace GameManager
 		
 			new_tile_state.push_back(-1); // Unclicked
 		}
+		
+#ifdef _DEBUG
 		PrintMinefield(minefield);
+#endif // _DEBUG
 
 		game_over = false;
 		victory   = false;
@@ -130,13 +138,13 @@ namespace GameManager
 		switch (GameManager::GetSizeDifficulty())
 		{
 			case GameManager::Difficulty::easy:
-				dimensions = 10;
+				dimensions = easy_dimensions;
 				break;
 			case GameManager::Difficulty::medium:
-				dimensions = 20;
+				dimensions = medium_dimensions;
 				break;
 			case GameManager::Difficulty::hard:
-				dimensions = 40;
+				dimensions = hard_dimensions;
 				break;
 			default:
 				break;
@@ -179,8 +187,8 @@ namespace GameManager
 			bool in_bounds		{ neighbour_idx[i] >= 0 && neighbour_idx[i] < minefield.size() };
 
 			// Prevents the tiles on the left and right edge from wrapping around
-			bool bleeding_edge_l{ id % 10 == 0 && (i == 0 || i == 3 || i == 5) };
-			bool bleeding_edge_r{ id % 10 == 9 && (i == 2 || i == 4 || i == 7) };
+			bool bleeding_edge_l{ id % dimensions == 0				&& (i == 0 || i == 3 || i == 5) };
+			bool bleeding_edge_r{ id % dimensions == dimensions - 1 && (i == 2 || i == 4 || i == 7) };
 
 			if (in_bounds && !bleeding_edge_l && !bleeding_edge_r)
 			{
@@ -302,7 +310,7 @@ namespace GameManager
 		if (minefield[id] == TileState::mine)		return;
 		if (minefield[id] != TileState::unexplored) return;
 
-		std::vector<int> neighbours = GetNeighbouringTiles(id);
+		std::vector<int> neighbours{ GetNeighbouringTiles(id) };
 		int mine_count{ GetNeighbouringMines(neighbours) };
 	
 		if (mine_count != 0)

@@ -181,7 +181,7 @@ namespace GUICreator {
         
     bool DrawGUI() 
     {
-        ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
         bool close = false; // Exit the program if true
 
         StyleMainGUI();
@@ -237,14 +237,13 @@ namespace GUICreator {
         int dimensions{ GameManager::GetDimensions() };
         if (GameManager::GetDimensions() == 0) GameManager::NewGame(mines, size);
 
-
         for (int y = 0; y < dimensions; ++y)
         {
             for (int x = 0; x < dimensions; ++x)
             {
                 if (x > 0) ImGui::SameLine();
 
-                int id{ y * 10 + x }; // 2D to 1D
+                int id{ y * dimensions + x }; // 2D to 1D
                 int color_count{ 0 };
 
                 ImGui::PushID(id);

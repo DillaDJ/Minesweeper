@@ -22,9 +22,17 @@ void CleanupDeviceD3D();
 void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-// Main code
-int main(int, char**)
+
+int main()
 {
+#ifdef NDEBUG
+    ShowWindow(GetConsoleWindow(), SW_HIDE); // Hide console
+#endif // !_DEBUG
+        
+#ifdef _DEBUG
+    ShowWindow(GetConsoleWindow(), SW_RESTORE); // Show console if debug
+#endif // MINE_DEBUG
+
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"Minesweeper", NULL };
