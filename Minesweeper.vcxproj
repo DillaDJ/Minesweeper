@@ -146,6 +146,7 @@
     <ClInclude Include="dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="GUICreator.h" />
     <ClInclude Include="GameManager.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dependencies\imgui\imgui.cpp" />
@@ -158,6 +159,12 @@
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="GUICreator.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Minesweeper.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

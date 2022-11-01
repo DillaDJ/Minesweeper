@@ -15,12 +15,9 @@ namespace GameManager
 	
 	void NewGame(Difficulty mine_amount, Difficulty size);
 	
-	Difficulty GetMineDifficulty();
-	
-	Difficulty GetSizeDifficulty();
-	
 	int GetDimensions();
 	
+	bool IsGenerated();
 	bool IsGameOver();
 	bool IsVictory();
 

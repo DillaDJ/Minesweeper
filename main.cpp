@@ -9,6 +9,7 @@
 #include <tchar.h>
 
 #include "GUICreator.h"
+#include "resource.h"
 
 
 // Data
@@ -28,16 +29,20 @@ int main()
 #ifdef NDEBUG
     ShowWindow(GetConsoleWindow(), SW_HIDE); // Hide console
 #endif // !_DEBUG
-        
+
 #ifdef _DEBUG
     ShowWindow(GetConsoleWindow(), SW_RESTORE); // Show console if debug
 #endif // MINE_DEBUG
 
+    // Load icon
+    HICON hIcon{ LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1)) };
+
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
-    WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"Minesweeper", NULL };
+    WNDCLASSEXW wc{ sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), hIcon, NULL, NULL, NULL, L"Minesweeper", NULL };
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Minesweeper", WS_OVERLAPPEDWINDOW, 100, 100, 540, 589, NULL, NULL, wc.hInstance, NULL);
+
+    HWND hwnd{ ::CreateWindowW(wc.lpszClassName, L"Minesweeper", (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX), 100, 100, 662, 708, NULL, NULL, wc.hInstance, NULL) };
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -54,7 +59,7 @@ int main()
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io{ ImGui::GetIO() }; (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
     io.ConfigViewportsNoTaskBarIcon = true;
@@ -72,7 +77,7 @@ int main()
     ImGui_ImplDX9_Init(g_pd3dDevice);
 
     // Main loop
-    bool done = false;
+    bool done{ false };
     while (!done)
     {
         // Poll and handle messages (inputs, window resize, etc.)

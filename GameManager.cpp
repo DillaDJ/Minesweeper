@@ -5,12 +5,11 @@ namespace GameManager
 {
 	constexpr double easy_mine_percent		{ 0.10 };
 	constexpr double medium_mine_percent	{ 0.20 };
-	constexpr double hard_mine_percent		{ 0.35 };
+	constexpr double hard_mine_percent		{ 0.30 };
 	constexpr int easy_dimensions	{ 10 };
 	constexpr int medium_dimensions	{ 20 };
 	constexpr int hard_dimensions	{ 30 };
 
-	Difficulty mine_difficulty{ Difficulty::easy };
 	Difficulty size_difficulty{ Difficulty::easy };
 
 	std::vector<TileState> minefield{ }; // 2D vector
@@ -56,20 +55,9 @@ namespace GameManager
 		std::mt19937 random{ seed };
 
 		// Setup tiles and mine count
-		switch (size)
-		{
-			case GameManager::Difficulty::easy:
-				tile_count = easy_dimensions * easy_dimensions;
-				break;
-			case GameManager::Difficulty::medium:
-				tile_count = medium_dimensions * medium_dimensions;
-				break;
-			case GameManager::Difficulty::hard:
-				tile_count = hard_dimensions * hard_dimensions;
-				break;
-			default:
-				break;
-		}
+		size_difficulty = size;
+		tile_count = GetDimensions();
+		tile_count *= tile_count;
 
 		switch (mine_amount)
 		{
@@ -85,9 +73,6 @@ namespace GameManager
 			default:
 				break;
 		}
-
-		mine_difficulty = mine_amount;
-		size_difficulty = size;
 
 		// Randomly generate ints for mine probabilities
 		for (int i = 0; i < tile_count; i++)
@@ -120,22 +105,10 @@ namespace GameManager
 		victory   = false;
 	}
 
-	Difficulty GetMineDifficulty()
-	{
-		return mine_difficulty;
-	}
-		
-	Difficulty GetSizeDifficulty()
-	{
-		return size_difficulty;
-	}
-
 	int GetDimensions()
 	{
-		if (minefield.size() == 0) return 0;
-
 		int dimensions{};
-		switch (GameManager::GetSizeDifficulty())
+		switch (size_difficulty)
 		{
 			case GameManager::Difficulty::easy:
 				dimensions = easy_dimensions;
@@ -151,6 +124,11 @@ namespace GameManager
 		}
 
 		return dimensions;
+	}
+
+	bool IsGenerated() 
+	{
+		return minefield.size() != 0;
 	}
 
 	bool IsGameOver()
@@ -255,53 +233,50 @@ namespace GameManager
 	{
 		if (minefield[id] == TileState::mine) game_over = true;
 
-		if (!game_over && !victory)
+		if (victory || game_over || minefield[id] != TileState::unexplored)
+			return;
+
+		switch (GetNeighbouringMines(id))
 		{
-			if (minefield[id] == TileState::flagged_tile || minefield[id] == TileState::flagged_mine)
-				return;
-
-			switch (GetNeighbouringMines(id))
-			{
-				case 0:
-					FloodFill(id);
-					break;
-				case 1:
-					minefield[id] = TileState::one_adjacent_mine;
-					break;
-				case 2:
-					minefield[id] = TileState::two_adjacent_mines;
-					break;
-				case 3:
-					minefield[id] = TileState::three_adjacent_mines;
-					break;
-				case 4:
-					minefield[id] = TileState::four_adjacent_mines;
-					break;
-				case 5:
-					minefield[id] = TileState::five_adjacent_mines;
-					break;
-				case 6:
-					minefield[id] = TileState::six_adjacent_mines;
-					break;
-				case 7:
-					minefield[id] = TileState::seven_adjacent_mines;
-					break;
-				case 8:
-					minefield[id] = TileState::eight_adjacent_mines;
-					break;
-				default:
-					break;
-			}
-
-			// Check win condition
-			bool not_won{};
-			for (int i = 0; i < minefield.size(); i++)
-			{
-				if (minefield[i] == TileState::unexplored) not_won = true;
-			}
-
-			victory = !not_won;
+			case 0:
+				FloodFill(id);
+				break;
+			case 1:
+				minefield[id] = TileState::one_adjacent_mine;
+				break;
+			case 2:
+				minefield[id] = TileState::two_adjacent_mines;
+				break;
+			case 3:
+				minefield[id] = TileState::three_adjacent_mines;
+				break;
+			case 4:
+				minefield[id] = TileState::four_adjacent_mines;
+				break;
+			case 5:
+				minefield[id] = TileState::five_adjacent_mines;
+				break;
+			case 6:
+				minefield[id] = TileState::six_adjacent_mines;
+				break;
+			case 7:
+				minefield[id] = TileState::seven_adjacent_mines;
+				break;
+			case 8:
+				minefield[id] = TileState::eight_adjacent_mines;
+				break;
+			default:
+				break;
 		}
+
+		// Check win condition
+		bool not_won{};
+		for (int i = 0; i < minefield.size(); i++)
+		{
+			if (minefield[i] == TileState::unexplored) not_won = true;
+		}
+
+		victory = !not_won;
 	}
 
 	void FloodFill(int id)
@@ -319,11 +294,8 @@ namespace GameManager
 			return;
 		}
 
-		// Process neighbours
-		for (int idx : neighbours) 
-		{
-			minefield[id] = TileState::no_adjacent_mines;
-			FloodFill(idx);
-		}
+		// Process tile and neighbours
+		minefield[id] = TileState::no_adjacent_mines;
+		for (int idx : neighbours) FloodFill(idx);
 	}
 }
