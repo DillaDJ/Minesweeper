@@ -1,5 +1,5 @@
 #include "GameManager.h"
-#include <iostream>
+
 
 namespace GameManager
 {
@@ -18,6 +18,7 @@ namespace GameManager
 	bool victory   { false };
 
 
+#ifdef _DEBUG
 	void PrintMinefield(std::vector<TileState> mines)
 	{
 		int dimensions{ GetDimensions() };
@@ -35,6 +36,39 @@ namespace GameManager
 
 		std::cout << std::endl << std::endl;
 	}
+
+	void PrintMinefieldState()
+	{
+		int dimensions{ GetDimensions() };
+
+		for (int i = 0; i < minefield.size(); i++)
+		{
+			if (i != 0 && i % dimensions == 0) std::cout << std::endl;
+
+			switch (minefield[i])
+			{
+				case TileState::mine:
+					std::cout << "* ";
+					break;
+				case TileState::flagged_mine:
+					std::cout << "F ";
+					break;
+				case TileState::flagged_tile:
+					std::cout << "f ";
+					break;
+				case TileState::unexplored:
+					std::cout << "U ";
+					break;
+				default:
+					std::cout << GetNeighbouringMines(i) << " ";
+					break;
+			}
+		}
+
+		std::cout << std::endl << std::endl;
+	}
+#endif // _DEBUG
+
 
 	// Generates a minefield by filling a vector with random integers, storing the ints in a map with their positions then sorting the vector
 	// I then pick an index in the sorted vector for how many mines we want and allocate this as the threshold, anything under it is a mine in
@@ -270,13 +304,39 @@ namespace GameManager
 		}
 
 		// Check win condition
-		bool not_won{};
+		victory = true;
 		for (int i = 0; i < minefield.size(); i++)
 		{
-			if (minefield[i] == TileState::unexplored) not_won = true;
+			if (minefield[i] == TileState::unexplored) 
+				victory = false;
+		}
+	}
+
+	void ProcessNeighbouringTiles(int id)
+	{
+		bool unnumbered_tile{ minefield[id] == TileState::mine || minefield[id] == TileState::unexplored || minefield[id] == TileState::no_adjacent_mines || minefield[id] == TileState::flagged_mine || minefield[id] == TileState::flagged_tile };
+		if (unnumbered_tile) return;
+
+		std::vector<int> neighbouring_tiles{ GetNeighbouringTiles(id)};
+		int neighbouring_mines{ GetNeighbouringMines(neighbouring_tiles)};
+		int flagged_count{};
+
+		for (int neighbour_id : neighbouring_tiles)
+		{
+			if (minefield[neighbour_id] == TileState::flagged_mine || minefield[neighbour_id] == TileState::flagged_tile)
+				++flagged_count;
 		}
 
-		victory = !not_won;
+		// Process all neighbouring mines except flagged ones, only if enough are flagged
+		if (neighbouring_mines > flagged_count) return;
+
+		for (int neighbour_id : neighbouring_tiles)
+		{
+			if (minefield[neighbour_id] == TileState::flagged_mine || minefield[neighbour_id] == TileState::flagged_tile)
+				continue;
+			else if (minefield[neighbour_id] == TileState::mine || minefield[neighbour_id] == TileState::unexplored)
+				ProcessTile(neighbour_id);
+		}
 	}
 
 	void FloodFill(int id)

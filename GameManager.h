@@ -5,6 +5,12 @@
 #include <vector>
 #include <map>
 
+#ifdef _DEBUG
+#include <iostream>
+#endif // _DEBUG
+
+
+
 namespace GameManager 
 {
 	enum class Difficulty { easy, medium, hard }; // Difficulty, mine-wise or size-wise
@@ -31,6 +37,8 @@ namespace GameManager
 	void FlagTile(int id);
 
 	void ProcessTile(int id);
+
+	void ProcessNeighbouringTiles(int id);
 
 	void FloodFill(int id);
 }

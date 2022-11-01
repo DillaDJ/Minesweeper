@@ -1,15 +1,4 @@
-// Dear ImGui: standalone example application for DirectX 9
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
-#include "dependencies/imgui/imgui.h"
-#include "dependencies/imgui/imgui_impl_dx9.h"
-#include "dependencies/imgui/imgui_impl_win32.h"
-#include <d3d9.h>
-#include <tchar.h>
-
-#include "GUICreator.h"
-#include "resource.h"
+#include "main.h"
 
 
 // Data
@@ -34,12 +23,14 @@ int main()
     ShowWindow(GetConsoleWindow(), SW_RESTORE); // Show console if debug
 #endif // MINE_DEBUG
 
+    HINSTANCE hInstance{ GetModuleHandle(NULL) };
+
     // Load icon
-    HICON hIcon{ LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1)) };
+    HICON hIcon{ LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)) };
 
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
-    WNDCLASSEXW wc{ sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), hIcon, NULL, NULL, NULL, L"Minesweeper", NULL };
+    WNDCLASSEXW wc{ sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, hInstance, hIcon, NULL, NULL, NULL, L"Minesweeper", NULL };
     ::RegisterClassExW(&wc);
 
     HWND hwnd{ ::CreateWindowW(wc.lpszClassName, L"Minesweeper", (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX), 100, 100, 662, 708, NULL, NULL, wc.hInstance, NULL) };

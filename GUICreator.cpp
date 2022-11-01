@@ -1,5 +1,5 @@
 #include "GUICreator.h"
-#include <iostream>
+
 
 namespace GUICreator {
 
@@ -73,6 +73,7 @@ namespace GUICreator {
         ImGuiWindowFlags new_game_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize;
         ImGui::GetStyle().WindowBorderSize = 1.f;
 
+        ImGui::SetNextWindowFocus();
         ImGui::Begin("New Game", p_open, new_game_flags);
 
         ImGui::TextUnformatted("Select Difficulty:");
@@ -119,6 +120,7 @@ namespace GUICreator {
         ImGuiWindowFlags how_to_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize;
         ImGui::GetStyle().WindowBorderSize = 1.f;
 
+        ImGui::SetNextWindowFocus();
         ImGui::Begin("How to Play", p_open, how_to_flags);
 
         ImGui::TextUnformatted("The objective of Minesweeper is to expose all non-mine tiles\n");
@@ -160,6 +162,12 @@ namespace GUICreator {
         ImGui::SameLine();
 
         ImGui::TextUnformatted(" <-- This is a flagged tile");
+        
+        ImGui::TextUnformatted("\nUsing the middle mouse button will clear all unflagged tiles around the"
+                               "\nclicked tile, only if there are the same amount or more flagged tiles"
+                               "\naround it, as indicated on the tile. If a mine is cleared this way it'll"
+                               "\nresult in a game-over so be careful!");
+
         ImGui::TextUnformatted("\nGood luck!");
 
         ImGui::End();
@@ -170,6 +178,7 @@ namespace GUICreator {
         ImGuiWindowFlags victory_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize;
         ImGui::GetStyle().WindowBorderSize = 1.f;
 
+        ImGui::SetNextWindowFocus();
         ImGui::Begin("Game over!", p_open, victory_flags);
 
         ImGui::TextUnformatted("Oops, you stepped on a mine!");
@@ -189,9 +198,11 @@ namespace GUICreator {
         ImGuiWindowFlags victory_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize;
         ImGui::GetStyle().WindowBorderSize = 1.f;
 
+        ImGui::SetNextWindowFocus();
         ImGui::Begin("You Win!", p_open, victory_flags);
 
         ImGui::TextUnformatted("Congratulations!");
+        ImGui::TextUnformatted("");
 
         if (ImGui::Button("Play Again"))
         {
@@ -207,6 +218,7 @@ namespace GUICreator {
         ImGuiWindowFlags about_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize;
         ImGui::GetStyle().WindowBorderSize = 1.f;
 
+        ImGui::SetNextWindowFocus();
         ImGui::Begin("About", p_open, about_flags);
 
         ImGui::TextUnformatted("Minesweeper, written in C++");
@@ -284,7 +296,7 @@ namespace GUICreator {
 #ifdef _DEBUG
         ImGui::ShowDemoWindow();
 #endif
-        bool close = false; // Exit the program if true
+        bool done = false; // Exit the program if true
 
         StyleMainGUI();
 
@@ -295,7 +307,7 @@ namespace GUICreator {
             {
                 if (ImGui::MenuItem("New Game"))                    new_game_window = !new_game_window;
                 if (ImGui::MenuItem("Dark Mode", NULL, dark_mode))  dark_mode = !dark_mode;
-                if (ImGui::MenuItem("Quit", "Alt + F4"))            close = true;
+                if (ImGui::MenuItem("Quit", "Alt + F4"))            done = true;
 
                 ImGui::EndMenu();
             }
@@ -311,7 +323,7 @@ namespace GUICreator {
         }
 
         // Create main window
-        static ImGuiWindowFlags main_window_flags{ ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings };
+        static ImGuiWindowFlags main_window_flags{ ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize };
 
         const ImGuiViewport* viewport{ ImGui::GetMainViewport() };
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -330,7 +342,7 @@ namespace GUICreator {
         if (game_over_window)   GameOverWindow(&game_over_window);
         if (victory_window)     VictoryWindow(&victory_window);
 
-        return close;
+        return done;
     }
 
     void DrawBoard() 
@@ -455,6 +467,15 @@ namespace GUICreator {
                     GameManager::ProcessTile(id);
 
                     if (GameManager::IsVictory())  victory_window   = true;
+                    if (GameManager::IsGameOver()) game_over_window = true;
+                }
+
+                // Process neighbouring tiles (mmb)
+                if (ImGui::IsItemClicked(2))
+                {
+                    GameManager::ProcessNeighbouringTiles(id);
+
+                    if (GameManager::IsVictory())  victory_window = true;
                     if (GameManager::IsGameOver()) game_over_window = true;
                 }
 
